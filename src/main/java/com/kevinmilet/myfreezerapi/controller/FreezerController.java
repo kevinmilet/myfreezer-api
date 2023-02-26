@@ -1,9 +1,9 @@
 package com.kevinmilet.myfreezerapi.controller;
 
+import java.security.Principal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kevinmilet.myfreezerapi.common.Utils;
 import com.kevinmilet.myfreezerapi.entity.Freezer;
 import com.kevinmilet.myfreezerapi.entity.FreezerType;
 import com.kevinmilet.myfreezerapi.entity.User;
@@ -42,6 +43,8 @@ public class FreezerController {
     private UserRepository userRepository;
     @Autowired
     private FreezerTypeRepository freezerTypeRepository;
+    @Autowired
+    private UserController userController;
 
     @GetMapping(value = "/congelateurs")
     public ResponseEntity<List<Freezer>> getAllFreezer() {
@@ -52,9 +55,10 @@ public class FreezerController {
     }
 
     @GetMapping("/mes_congelateurs")
-    public ResponseEntity<List<Freezer>> getFreezerByUser() {
+    public ResponseEntity<List<Freezer>> getFreezerByUser(Principal principal) {
 
-	List<Freezer> freezerList = freezerRepository.findFreezerByUserId(USER_ID);
+	Long userId = userController.getUserConnectedId(principal);
+	List<Freezer> freezerList = freezerRepository.findFreezerByUserId(userId);
 
 	return new ResponseEntity<>(freezerList, HttpStatus.OK);
 
@@ -71,11 +75,12 @@ public class FreezerController {
     }
 
     @PostMapping("/congelateur/create")
-    public ResponseEntity<Freezer> createFreezer(@Valid @RequestBody Freezer freezer) {
+    public ResponseEntity<Freezer> createFreezer(@Valid @RequestBody Freezer freezer, Principal principal) {
 
-	Optional<User> user = userRepository.findById(USER_ID);
+	Long userId = userController.getUserConnectedId(principal);
+	Optional<User> user = userRepository.findById(userId);
 	Optional<FreezerType> freezerType = freezerTypeRepository.findById(freezer.getFreezerType().getId());
-	String uuid = UUID.randomUUID().toString().replace("-", "");
+	String uuid = Utils.generateUUID();
 
 	if (freezerType.isPresent()) {
 	    freezer.setFreezerType(freezerType.get());

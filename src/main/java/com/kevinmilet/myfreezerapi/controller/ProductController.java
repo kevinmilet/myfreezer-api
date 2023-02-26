@@ -1,9 +1,9 @@
 package com.kevinmilet.myfreezerapi.controller;
 
+import java.security.Principal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kevinmilet.myfreezerapi.common.Utils;
 import com.kevinmilet.myfreezerapi.entity.Product;
 import com.kevinmilet.myfreezerapi.entity.ProductType;
 import com.kevinmilet.myfreezerapi.entity.User;
@@ -42,6 +43,8 @@ public class ProductController {
     private UserRepository userRepository;
     @Autowired
     private ProductTypeRepository productTypeRepository;
+    @Autowired
+    private UserController userController;
 
     @GetMapping("/produits")
     public ResponseEntity<List<Product>> getAllProducts() {
@@ -61,12 +64,34 @@ public class ProductController {
 	return productRepository.findById(id);
     }
 
-    @PostMapping("/produit/create")
-    public ResponseEntity<?> createProduct(@Valid @RequestBody Product product) {
+    @GetMapping("/produits/congelateur/{id}")
+    public ResponseEntity<List<Product>> getProductByFreezerId(@PathVariable("id") Long id) {
 
-	Optional<User> user = userRepository.findById(USER_ID);
+	if (id != null) {
+	    List<Product> productList = productRepository.findProductByFreezerId(id);
+
+	    return new ResponseEntity<>(productList, HttpStatus.OK);
+	}
+	return null;
+
+    }
+
+    @GetMapping("/mes_produits/")
+    public ResponseEntity<List<Product>> getProductByUser(Principal principal) {
+
+	Long userId = userController.getUserConnectedId(principal);
+	List<Product> productList = productRepository.findProductByUserId(userId);
+
+	return new ResponseEntity<>(productList, HttpStatus.OK);
+    }
+
+    @PostMapping("/produit/create")
+    public ResponseEntity<?> createProduct(@Valid @RequestBody Product product, Principal principal) {
+
+	Long userId = userController.getUserConnectedId(principal);
+	Optional<User> user = userRepository.findById(userId);
 	Optional<ProductType> productType = productTypeRepository.findById(product.getProductType().getId());
-	String uuid = UUID.randomUUID().toString().replace("-", "");
+	String uuid = Utils.generateUUID();
 
 	if (productType.isPresent()) {
 	    product.setProductType(productType.get());
@@ -82,6 +107,7 @@ public class ProductController {
 
 	product.setCreationDate(Instant.now());
 	product.setAddingDate(product.getAddingDate());
+	product.setQuantity(product.getQuantity());
 	product.setProductID(uuid);
 
 	productRepository.save(product);
@@ -89,7 +115,7 @@ public class ProductController {
 	return new ResponseEntity<>(product, HttpStatus.CREATED);
     }
 
-    @DeleteMapping("/product/delete/{id}")
+    @DeleteMapping("/produit/delete/{id}")
     public ResponseEntity<Object> deleteProduct(@PathVariable("id") Long id) {
 
 	if (id == null) {
@@ -112,23 +138,27 @@ public class ProductController {
 	return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
-    @PutMapping("/product/update/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable("id") Long id, @RequestBody Product productReq) {
+    @PutMapping("/produit/update/{id}")
+    public ResponseEntity<Product> updateProduct(@PathVariable(name = "id") Long id, @RequestBody Product produitReq) {
 
 	if (id == null) {
 	    log.error("L'ID du produit est null");
 	    return null;
 	}
 
-	if (productReq == null) {
+	if (produitReq == null) {
 	    log.error("Le produit est inconnu");
 	    return null;
 	}
 
 	Product product = productRepository.findById(id).orElseThrow();
 
-	product.setName(productReq.getName());
-	product.setProductType(productReq.getProductType());
+	product.setName(produitReq.getName());
+	product.setQuantity(produitReq.getQuantity());
+	product.setFreezer(produitReq.getFreezer());
+	product.setProductType(produitReq.getProductType());
+	product.setRemovingDate(produitReq.getRemovingDate());
+	product.setAddingDate(produitReq.getAddingDate());
 	product.setUpdateDate(Instant.now());
 
 	productRepository.save(product);

@@ -23,6 +23,6 @@ public interface UserService {
 //
 //    UserDto activateUser(Long id, UserDto userDto);
 //
-//    UserDto setUserAdmin(Long id, UserDto userDto);
+//    UserDto setUserAsAdmin(Long id, UserDto userDto);
 
 }

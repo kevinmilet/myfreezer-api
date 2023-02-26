@@ -14,7 +14,7 @@ import com.kevinmilet.myfreezerapi.entity.Product;
 @Repository
 public interface ProductRepository extends CrudRepository<Product, Long> {
 
-    List<Product> findProductByUserId(Long id);
+    List<Product> findProductByUserId(Long userId);
 
     List<Product> findProductByFreezerId(Long id);
 }

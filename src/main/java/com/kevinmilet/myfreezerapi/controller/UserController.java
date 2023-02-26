@@ -1,101 +1,105 @@
 package com.kevinmilet.myfreezerapi.controller;
 
-import java.util.Arrays;
+import java.security.Principal;
+import java.time.Instant;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kevinmilet.myfreezerapi.common.Utils;
 import com.kevinmilet.myfreezerapi.entity.User;
+import com.kevinmilet.myfreezerapi.jwt.JwtController;
+import com.kevinmilet.myfreezerapi.jwt.JwtFilter;
+import com.kevinmilet.myfreezerapi.jwt.JwtUtils;
+import com.kevinmilet.myfreezerapi.repository.UserRepository;
 
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author kevin
  *
  */
 @RestController
+@Slf4j
 public class UserController {
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private JwtController jwtController;
+
+    @Autowired
+    private JwtUtils jwtUtils;
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @PostMapping("/creer_utilisateur")
     public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
 
-	User newUser = new User();
-	newUser.setEmail("toto@toto.com");
-	newUser.setFirstname("Toto");
-	newUser.setLastname("Toto");
-	newUser.setIsActive(true);
-	newUser.setIsAdmin(false);
-	newUser.setAccountId("d15fe5sd14gv5sr4rh14g48edrh");
-	newUser.setId(1L);
+	User existingUser = userRepository.findOneByEmail(user.getEmail());
 
-	return new ResponseEntity<User>(newUser, HttpStatus.CREATED);
+	if (existingUser != null) {
+	    log.error("Un utilisateur est déjà enregistré avec cet adresse email");
+	    return new ResponseEntity("Un utilisateur est déjà enregistré avec cet adresse email",
+		    HttpStatus.BAD_REQUEST);
+	}
+
+	User savedUser = saveUser(user);
+
+	Authentication authentication = jwtController.logUser(user.getEmail(), user.getPassword());
+	String jwt = jwtUtils.generateToken(authentication);
+	HttpHeaders headers = new HttpHeaders();
+	headers.add(JwtFilter.AUTHORIZATION_HEADER, "Bearer " + jwt);
+
+	return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
+    }
+
+    private User saveUser(User user) {
+
+	User newUser = new User();
+	newUser.setEmail(user.getEmail().trim());
+	newUser.setFirstname(StringUtils.capitalize(user.getFirstname().trim()));
+	newUser.setLastname(StringUtils.capitalize(user.getLastname().trim()));
+	newUser.setPassword(new BCryptPasswordEncoder().encode(user.getPassword()));
+	newUser.setIsActive(Boolean.FALSE);
+	newUser.setIsAdmin(Boolean.FALSE);
+	newUser.setCreated_at(Instant.now());
+	newUser.setAccountId(Utils.generateUUID());
+
+	userRepository.save(newUser);
+
+	return newUser;
     }
 
     @GetMapping("/users")
     public ResponseEntity<List<User>> getAllUsers() {
 
-	User newUser = new User();
-	newUser.setEmail("toto@toto.com");
-	newUser.setFirstname("Toto");
-	newUser.setLastname("Toto");
-	newUser.setIsActive(true);
-	newUser.setIsAdmin(false);
-	newUser.setAccountId("d15fe5sd14gv5sr4rh14g48edrh");
-	newUser.setId(1L);
+	List<User> userList = (List<User>) userRepository.findAll();
 
-	return new ResponseEntity<>(Arrays.asList(newUser), HttpStatus.OK);
+	return new ResponseEntity<>(userList, HttpStatus.OK);
     }
 
-//    private final UserService userService;
-//    private final ModelMapper modelMapper;
-//    // private final JwtController jwtController;
-//    // private final JwtUtils jwtUtils;
-//
-//    @Autowired
-//    public UserController(UserService userService, ModelMapper modelMapper) {
-//	this.userService = userService;
-//	this.modelMapper = modelMapper;
-//	// this.jwtController = jwtController;
-//	// this.jwtUtils = jwtUtils;
-//    }
-//
-//    @PostMapping("/creer_utilisateur")
-//    public ResponseEntity createUser(@Valid @RequestBody UserDto userDto) {
-//
-//	UserDto userExiste = userService.findUserByEmail(userDto.getEmail());
-//
-//	if (userExiste != null) {
-//	    return new ResponseEntity("User already existing", HttpStatus.BAD_REQUEST);
-//	}
-//
-//	// convert DTO to entity
-//	User request = modelMapper.map(userDto, User.class);
-//
-//	UserDto user = userService.createUser(request);
-//
-//	// convert entity to DTO
-//	UserDto response = modelMapper.map(user, UserDto.class);
+    public Long getUserConnectedId(Principal principal) {
+	if (!(principal instanceof UsernamePasswordAuthenticationToken)) {
+	    throw new RuntimeException("User not found");
+	}
 
-//        Authentication authentication = jwtController.logUser(utilisateurDto.getEmail(), utilisateurDto.getPassword());
-//        String jwt = jwtUtils.generateToken(authentication);
-//        HttpHeaders httpHeaders = new HttpHeaders();
-//        httpHeaders.add(JwtFilter.AUTHORIZATION_HEADER, "Bearer " + jwt);
-//
-//        return new ResponseEntity<>(response, httpHeaders, HttpStatus.CREATED);
-    // return null;
-//    }
+	UsernamePasswordAuthenticationToken user = (UsernamePasswordAuthenticationToken) principal;
+	User oneByMail = userRepository.findOneByEmail(user.getName());
 
-//    @GetMapping(value = "/isConnected")
-//    public ResponseEntity getUSerConnected() {
-//	Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-//	if (principal instanceof UserDetails) {
-//	    return new ResponseEntity(((UserDetails) principal).getUsername(), HttpStatus.OK);
-//	}
-//	return new ResponseEntity("User is not connected", HttpStatus.FORBIDDEN);
-//    }
+	return oneByMail.getId();
+    }
+
 }

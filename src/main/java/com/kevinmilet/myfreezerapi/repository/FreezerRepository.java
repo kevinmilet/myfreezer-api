@@ -14,5 +14,5 @@ import com.kevinmilet.myfreezerapi.entity.Freezer;
 @Repository
 public interface FreezerRepository extends CrudRepository<Freezer, Long> {
 
-    List<Freezer> findFreezerByUserId(Long id);
+    List<Freezer> findFreezerByUserId(Long userId);
 }

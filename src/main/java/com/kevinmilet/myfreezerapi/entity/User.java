@@ -35,18 +35,17 @@ public class User {
     private String password;
 
     @CreatedDate
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false, columnDefinition = "datetime default now")
     private Instant created_at;
 
     @LastModifiedDate
     private Instant updated_at;
 
-    @NotBlank
     private String accountId;
 
     @Column(columnDefinition = "boolean default false")
     private Boolean isAdmin;
-    @Column(columnDefinition = "boolean default true")
+    @Column(columnDefinition = "boolean default false")
     private Boolean isActive;
 
     private String token;
