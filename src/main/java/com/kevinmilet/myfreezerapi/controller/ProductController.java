@@ -1,8 +1,11 @@
 package com.kevinmilet.myfreezerapi.controller;
 
-import java.util.Arrays;
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -13,61 +16,124 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.kevinmilet.myfreezerapi.entity.Freezer;
 import com.kevinmilet.myfreezerapi.entity.Product;
 import com.kevinmilet.myfreezerapi.entity.ProductType;
+import com.kevinmilet.myfreezerapi.entity.User;
+import com.kevinmilet.myfreezerapi.repository.ProductRepository;
+import com.kevinmilet.myfreezerapi.repository.ProductTypeRepository;
+import com.kevinmilet.myfreezerapi.repository.UserRepository;
 
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author kevin
  *
  */
 @RestController
+@Slf4j
 public class ProductController {
+
+    private static final Long USER_ID = 1L;
+
+    @Autowired
+    private ProductRepository productRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private ProductTypeRepository productTypeRepository;
 
     @GetMapping("/produits")
     public ResponseEntity<List<Product>> getAllProducts() {
 
-	Product product = new Product();
-	product.setId(1L);
-	product.setProductID("f1548rf1514v41f9bg885f14hb48hb");
-	product.setName("Pizza");
-	product.setFreezer(new Freezer("Mon congélo"));
-	product.setProductType(new ProductType("Plats préparés"));
-	product.setQuantity(3);
+	List<Product> products = (List<Product>) productRepository.findAll();
 
-	return new ResponseEntity<>(Arrays.asList(product), HttpStatus.OK);
+	return new ResponseEntity<>(products, HttpStatus.OK);
+    }
+
+    @GetMapping("/produit/{id}")
+    public Optional<Product> getProductById(@PathVariable(name = "id") Long id) {
+	if (id == null) {
+	    log.error("L'ID du produit est null");
+	    return null;
+	}
+
+	return productRepository.findById(id);
     }
 
     @PostMapping("/produit/create")
-    public ResponseEntity<Product> createProduct(@Valid @RequestBody Product product) {
+    public ResponseEntity<?> createProduct(@Valid @RequestBody Product product) {
 
-	Product newProduct = new Product();
-	newProduct.setId(1L);
-	newProduct.setProductID("f1548rf1514v41f9bg885f14hb48hb");
-	newProduct.setName("Pizza");
-	newProduct.setFreezer(new Freezer("Mon congélo"));
-	newProduct.setProductType(new ProductType("Plats préparés"));
-	newProduct.setQuantity(3);
+	Optional<User> user = userRepository.findById(USER_ID);
+	Optional<ProductType> productType = productTypeRepository.findById(product.getProductType().getId());
+	String uuid = UUID.randomUUID().toString().replace("-", "");
 
-	return new ResponseEntity<>(newProduct, HttpStatus.CREATED);
+	if (productType.isPresent()) {
+	    product.setProductType(productType.get());
+	} else {
+	    return new ResponseEntity<>("Vous devez indiquer le type de produit", HttpStatus.BAD_REQUEST);
+	}
+
+	if (user.isPresent()) {
+	    product.setUser(user.get());
+	} else {
+	    return new ResponseEntity<>("L'utilisateur n'a pas été trouvé", HttpStatus.BAD_REQUEST);
+	}
+
+	product.setCreationDate(Instant.now());
+	product.setAddingDate(product.getAddingDate());
+	product.setProductID(uuid);
+
+	productRepository.save(product);
+
+	return new ResponseEntity<>(product, HttpStatus.CREATED);
     }
 
     @DeleteMapping("/product/delete/{id}")
-    public ResponseEntity<Object> deleteProduct(@PathVariable("id") String id) {
+    public ResponseEntity<Object> deleteProduct(@PathVariable("id") Long id) {
 
-	// TODO delete depuis freezerId
+	if (id == null) {
+	    log.error("produit inconnu");
+	    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+	}
 
-	return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
+	Product product;
+
+	try {
+	    product = productRepository.findById(id).orElseThrow(Exception::new);
+	    productRepository.delete(product);
+
+	    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+
+	} catch (Exception e) {
+	    log.error("Produit non trouvé: " + e.getMessage());
+	}
+
+	return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     @PutMapping("/product/update/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable("id") String id, @RequestBody Product product) {
+    public ResponseEntity<Product> updateProduct(@PathVariable("id") Long id, @RequestBody Product productReq) {
 
-	// TODO update depuis freezerId
+	if (id == null) {
+	    log.error("L'ID du produit est null");
+	    return null;
+	}
 
-	return new ResponseEntity<>(HttpStatus.OK);
+	if (productReq == null) {
+	    log.error("Le produit est inconnu");
+	    return null;
+	}
+
+	Product product = productRepository.findById(id).orElseThrow();
+
+	product.setName(productReq.getName());
+	product.setProductType(productReq.getProductType());
+	product.setUpdateDate(Instant.now());
+
+	productRepository.save(product);
+
+	return new ResponseEntity<>(product, HttpStatus.OK);
     }
 
 }

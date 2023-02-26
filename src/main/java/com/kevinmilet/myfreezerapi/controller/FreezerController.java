@@ -1,7 +1,9 @@
 package com.kevinmilet.myfreezerapi.controller;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,7 +17,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kevinmilet.myfreezerapi.entity.Freezer;
+import com.kevinmilet.myfreezerapi.entity.FreezerType;
+import com.kevinmilet.myfreezerapi.entity.User;
 import com.kevinmilet.myfreezerapi.repository.FreezerRepository;
+import com.kevinmilet.myfreezerapi.repository.FreezerTypeRepository;
+import com.kevinmilet.myfreezerapi.repository.UserRepository;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +38,10 @@ public class FreezerController {
 
     @Autowired
     private FreezerRepository freezerRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private FreezerTypeRepository freezerTypeRepository;
 
     @GetMapping(value = "/congelateurs")
     public ResponseEntity<List<Freezer>> getAllFreezer() {
@@ -63,42 +73,74 @@ public class FreezerController {
     @PostMapping("/congelateur/create")
     public ResponseEntity<Freezer> createFreezer(@Valid @RequestBody Freezer freezer) {
 
-//	return FreezerDto
-//		.fromEntity(freezerService.createFreezer(FreezerDto.toEntity(freezerDto), principal).getBody());
+	Optional<User> user = userRepository.findById(USER_ID);
+	Optional<FreezerType> freezerType = freezerTypeRepository.findById(freezer.getFreezerType().getId());
+	String uuid = UUID.randomUUID().toString().replace("-", "");
 
-	// TODO persist
+	if (freezerType.isPresent()) {
+	    freezer.setFreezerType(freezerType.get());
+	} else {
+	    return new ResponseEntity("Vous devez indiquer le type de congélateur", HttpStatus.BAD_REQUEST);
+	}
+
+	if (user.isPresent()) {
+	    freezer.setUser(user.get());
+	} else {
+	    return new ResponseEntity("L'utilisateur n'a pas été trouvé", HttpStatus.BAD_REQUEST);
+	}
+
+	freezer.setFreezerId(uuid);
+	freezer.setCreationDate(Instant.now());
+
+	freezerRepository.save(freezer);
 
 	return new ResponseEntity<>(freezer, HttpStatus.CREATED);
     }
 
     @PutMapping("/congelateur/update/{id}")
-    public ResponseEntity<Freezer> updateFreezer(@Valid @PathVariable("id") String id, @RequestBody Freezer freezer) {
+    public ResponseEntity<Freezer> updateFreezer(@Valid @PathVariable("id") Long id, @RequestBody Freezer freezerReq) {
 
-//	if (id == null) {
-//	    log.error("L'ID du congélateur est null");
-//	    return null;
-//	}
-//
-//	if (freezerDto == null) {
-//	    log.error("Le congélateur est inconnu");
-//	    return null;
-//	}
-//
-//	return freezerService.updateFreezer(Long.parseLong(id), FreezerDto.toEntity(freezerDto));
+	if (id == null) {
+	    log.error("L'ID du congélateur est null");
+	    return null;
+	}
 
-	// TODO update depuis freezerId
+	if (freezerReq == null) {
+	    log.error("Le congélateur est inconnu");
+	    return null;
+	}
 
-	return new ResponseEntity<>(HttpStatus.OK);
+	Freezer freezer = freezerRepository.findById(id).orElseThrow();
+
+	freezer.setName(freezerReq.getName());
+	freezer.setFreezerType(freezerReq.getFreezerType());
+	freezer.setUpdateDate(Instant.now());
+
+	freezerRepository.save(freezer);
+
+	return new ResponseEntity<>(freezer, HttpStatus.OK);
     }
 
     @DeleteMapping("/congelateur/delete/{id}")
-    public ResponseEntity<Object> deleteFreezer(@PathVariable("id") String id) {
-//	freezerService.deleteFreezer(Long.parseLong(id));
-//	return new ResponseEntity<>("Congélateur supprimé avec succes", HttpStatus.OK);
+    public ResponseEntity<Object> deleteFreezer(@PathVariable("id") Long id) {
+	if (id == null) {
+	    log.error("congelateur inconnu");
+	    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+	}
 
-	// TODO delete depuis freezerId
+	Freezer freezer;
 
-	return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
+	try {
+	    freezer = freezerRepository.findById(id).orElseThrow(Exception::new);
+	    freezerRepository.delete(freezer);
+
+	    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+
+	} catch (Exception e) {
+	    log.error("Congélateur non trouvé: " + e.getMessage());
+	}
+
+	return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
 }

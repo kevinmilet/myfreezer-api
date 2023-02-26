@@ -3,9 +3,9 @@
  */
 package com.kevinmilet.myfreezerapi.controller;
 
-import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,51 +17,85 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kevinmilet.myfreezerapi.entity.FreezerType;
+import com.kevinmilet.myfreezerapi.repository.FreezerTypeRepository;
 
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author kevin
  *
  */
 @RestController
+@Slf4j
 public class FreezerTypeController {
+
+    @Autowired
+    private FreezerTypeRepository freezerTypeRepository;
 
     @GetMapping("/types_congelateurs")
     public ResponseEntity<List<FreezerType>> getAllFreezerTypes() {
 
-	FreezerType freezerType = new FreezerType();
-	freezerType.setId(1L);
-	freezerType.setName("Armoire");
+	List<FreezerType> freezerTypesList = (List<FreezerType>) freezerTypeRepository.findAll();
 
-	return new ResponseEntity<>(Arrays.asList(freezerType), HttpStatus.OK);
+	return new ResponseEntity<>(freezerTypesList, HttpStatus.OK);
     }
 
     @PostMapping("/type_congelateur/create")
     public ResponseEntity<FreezerType> createFreezerType(@Valid @RequestBody FreezerType freezerType) {
 
 	FreezerType newFreezerType = new FreezerType();
-	newFreezerType.setId(1L);
-	newFreezerType.setName("Armoire");
+	newFreezerType.setName(freezerType.getName());
+
+	freezerTypeRepository.save(newFreezerType);
 
 	return new ResponseEntity<>(newFreezerType, HttpStatus.CREATED);
     }
 
     @DeleteMapping("/type_congelateur/delete/{id}")
-    public ResponseEntity<Object> deleteFreezerType(@PathVariable("id") String id) {
+    public ResponseEntity<Object> deleteFreezerType(@PathVariable("id") Long id) {
 
-	// TODO delete depuis freezerId
+	if (id == null) {
+	    log.error("type de congelateur inconnu");
+	    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+	}
 
-	return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
+	FreezerType freezerType;
+
+	try {
+	    freezerType = freezerTypeRepository.findById(id).orElseThrow(Exception::new);
+	    freezerTypeRepository.delete(freezerType);
+
+	    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+
+	} catch (Exception e) {
+	    log.error("Type de congélateur non trouvé: " + e.getMessage());
+	}
+
+	return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     @PutMapping("/type_congelateur/update/{id}")
-    public ResponseEntity<FreezerType> updateProduct(@PathVariable("id") String id,
-	    @RequestBody FreezerType freezerType) {
+    public ResponseEntity<FreezerType> updateProduct(@PathVariable("id") Long id,
+	    @RequestBody FreezerType freezerTypeReq) {
 
-	// TODO update depuis freezerId
+	if (id == null) {
+	    log.error("L'ID du type de congélateur est null");
+	    return null;
+	}
 
-	return new ResponseEntity<>(HttpStatus.OK);
+	if (freezerTypeReq == null) {
+	    log.error("Le type de congélateur est inconnu");
+	    return null;
+	}
+
+	FreezerType freezerType = freezerTypeRepository.findById(id).orElseThrow();
+
+	freezerType.setName(freezerTypeReq.getName());
+
+	freezerTypeRepository.save(freezerType);
+
+	return new ResponseEntity<>(freezerType, HttpStatus.OK);
     }
 
 }

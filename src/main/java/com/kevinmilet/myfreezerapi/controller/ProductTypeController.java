@@ -1,8 +1,8 @@
 package com.kevinmilet.myfreezerapi.controller;
 
-import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,51 +14,85 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kevinmilet.myfreezerapi.entity.ProductType;
+import com.kevinmilet.myfreezerapi.repository.ProductTypeRepository;
 
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author kevin
  *
  */
 @RestController
+@Slf4j
 public class ProductTypeController {
+
+    @Autowired
+    private ProductTypeRepository productTypeRepository;
 
     @GetMapping("/types_produits")
     public ResponseEntity<List<ProductType>> getAllProductsTypes() {
 
-	ProductType productType = new ProductType();
-	productType.setId(1L);
-	productType.setName("Plats préparés");
+	List<ProductType> productTypeList = (List<ProductType>) productTypeRepository.findAll();
 
-	return new ResponseEntity<>(Arrays.asList(productType), HttpStatus.OK);
+	return new ResponseEntity<>(productTypeList, HttpStatus.OK);
     }
 
     @PostMapping("/types_produits/create")
     public ResponseEntity<ProductType> createProductType(@Valid @RequestBody ProductType productType) {
 
 	ProductType newProductType = new ProductType();
-	newProductType.setId(1L);
-	newProductType.setName("Plats préparés");
+	newProductType.setName(productType.getName());
+
+	productTypeRepository.save(newProductType);
 
 	return new ResponseEntity<>(newProductType, HttpStatus.CREATED);
     }
 
     @DeleteMapping("/types_produits/delete/{id}")
-    public ResponseEntity<Object> deleteProductType(@PathVariable("id") String id) {
+    public ResponseEntity<Object> deleteProductType(@PathVariable("id") Long id) {
 
-	// TODO delete depuis freezerId
+	if (id == null) {
+	    log.error("type de produit inconnu");
+	    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+	}
 
-	return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
+	ProductType productType;
+
+	try {
+	    productType = productTypeRepository.findById(id).orElseThrow(Exception::new);
+	    productTypeRepository.delete(productType);
+
+	    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+
+	} catch (Exception e) {
+	    log.error("Type de produit non trouvé: " + e.getMessage());
+	}
+
+	return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     @PutMapping("/types_produits/update/{id}")
-    public ResponseEntity<ProductType> updateProductType(@PathVariable("id") String id,
-	    @RequestBody ProductType productType) {
+    public ResponseEntity<ProductType> updateProductType(@PathVariable("id") Long id,
+	    @RequestBody ProductType productTypeReq) {
 
-	// TODO update depuis freezerId
+	if (id == null) {
+	    log.error("L'ID du type de produit est null");
+	    return null;
+	}
 
-	return new ResponseEntity<>(HttpStatus.OK);
+	if (productTypeReq == null) {
+	    log.error("Le type de produit est inconnu");
+	    return null;
+	}
+
+	ProductType productType = productTypeRepository.findById(id).orElseThrow();
+
+	productType.setName(productTypeReq.getName());
+
+	productTypeRepository.save(productType);
+
+	return new ResponseEntity<>(productType, HttpStatus.OK);
     }
 
 }
