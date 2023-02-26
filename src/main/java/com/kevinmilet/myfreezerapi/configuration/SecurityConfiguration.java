@@ -28,8 +28,13 @@ public class SecurityConfiguration {
     SecurityFilterChain web(HttpSecurity http) throws Exception {
 	http.csrf().disable().exceptionHandling().and().sessionManagement()
 		.sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-		.authorizeHttpRequests(auth -> auth.requestMatchers("/users").permitAll()
-			.requestMatchers("/authenticate").permitAll().anyRequest().authenticated());
+		.authorizeHttpRequests(auth -> auth.requestMatchers("/add-user").permitAll()
+			.requestMatchers("/authenticate").permitAll().requestMatchers("/isConnected").permitAll()
+			.requestMatchers("/v3/api-docs/**").permitAll().requestMatchers("/api-docs.yaml").permitAll()
+			.requestMatchers("/swagger-resources/**").permitAll().requestMatchers("/swagger-ui/**")
+			.permitAll().requestMatchers("/swagger-ui.html").permitAll().requestMatchers("/webjars/**")
+			.permitAll().requestMatchers("/v3/api-docs/swagger-config").permitAll().anyRequest()
+			.authenticated());
 
 	http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 

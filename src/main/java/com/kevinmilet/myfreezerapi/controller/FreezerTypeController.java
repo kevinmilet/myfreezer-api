@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.kevinmilet.myfreezerapi.entity.FreezerType;
 import com.kevinmilet.myfreezerapi.repository.FreezerTypeRepository;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @RestController
 @Slf4j
+@SecurityRequirement(name = "bearerAuth")
 public class FreezerTypeController {
 
     @Autowired

@@ -24,6 +24,7 @@ import com.kevinmilet.myfreezerapi.repository.FreezerRepository;
 import com.kevinmilet.myfreezerapi.repository.FreezerTypeRepository;
 import com.kevinmilet.myfreezerapi.repository.UserRepository;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,9 +34,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @RestController
 @Slf4j
+@SecurityRequirement(name = "bearerAuth")
 public class FreezerController {
-
-    private static final Long USER_ID = 1L;
 
     @Autowired
     private FreezerRepository freezerRepository;
@@ -44,7 +44,7 @@ public class FreezerController {
     @Autowired
     private FreezerTypeRepository freezerTypeRepository;
     @Autowired
-    private UserController userController;
+    private AdminController adminController;
 
     @GetMapping(value = "/congelateurs")
     public ResponseEntity<List<Freezer>> getAllFreezer() {
@@ -57,7 +57,7 @@ public class FreezerController {
     @GetMapping("/mes_congelateurs")
     public ResponseEntity<List<Freezer>> getFreezerByUser(Principal principal) {
 
-	Long userId = userController.getUserConnectedId(principal);
+	Long userId = adminController.getUserConnectedId(principal);
 	List<Freezer> freezerList = freezerRepository.findFreezerByUserId(userId);
 
 	return new ResponseEntity<>(freezerList, HttpStatus.OK);
@@ -77,7 +77,7 @@ public class FreezerController {
     @PostMapping("/congelateur/create")
     public ResponseEntity<Freezer> createFreezer(@Valid @RequestBody Freezer freezer, Principal principal) {
 
-	Long userId = userController.getUserConnectedId(principal);
+	Long userId = adminController.getUserConnectedId(principal);
 	Optional<User> user = userRepository.findById(userId);
 	Optional<FreezerType> freezerType = freezerTypeRepository.findById(freezer.getFreezerType().getId());
 	String uuid = Utils.generateUUID();

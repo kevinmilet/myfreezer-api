@@ -5,8 +5,6 @@ import java.time.Instant;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -31,11 +29,11 @@ public class User {
     private String lastname;
     @NotBlank
     private String email;
-    @JsonIgnore
+
     private String password;
 
     @CreatedDate
-    @Column(nullable = false, updatable = false, columnDefinition = "datetime default now")
+    @Column(nullable = false, updatable = false)
     private Instant created_at;
 
     @LastModifiedDate

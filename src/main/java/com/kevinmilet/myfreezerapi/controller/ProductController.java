@@ -24,6 +24,7 @@ import com.kevinmilet.myfreezerapi.repository.ProductRepository;
 import com.kevinmilet.myfreezerapi.repository.ProductTypeRepository;
 import com.kevinmilet.myfreezerapi.repository.UserRepository;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,9 +34,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @RestController
 @Slf4j
+@SecurityRequirement(name = "bearerAuth")
 public class ProductController {
-
-    private static final Long USER_ID = 1L;
 
     @Autowired
     private ProductRepository productRepository;
@@ -44,7 +44,7 @@ public class ProductController {
     @Autowired
     private ProductTypeRepository productTypeRepository;
     @Autowired
-    private UserController userController;
+    private AdminController adminController;
 
     @GetMapping("/produits")
     public ResponseEntity<List<Product>> getAllProducts() {
@@ -79,7 +79,7 @@ public class ProductController {
     @GetMapping("/mes_produits/")
     public ResponseEntity<List<Product>> getProductByUser(Principal principal) {
 
-	Long userId = userController.getUserConnectedId(principal);
+	Long userId = adminController.getUserConnectedId(principal);
 	List<Product> productList = productRepository.findProductByUserId(userId);
 
 	return new ResponseEntity<>(productList, HttpStatus.OK);
@@ -88,7 +88,7 @@ public class ProductController {
     @PostMapping("/produit/create")
     public ResponseEntity<?> createProduct(@Valid @RequestBody Product product, Principal principal) {
 
-	Long userId = userController.getUserConnectedId(principal);
+	Long userId = adminController.getUserConnectedId(principal);
 	Optional<User> user = userRepository.findById(userId);
 	Optional<ProductType> productType = productTypeRepository.findById(product.getProductType().getId());
 	String uuid = Utils.generateUUID();

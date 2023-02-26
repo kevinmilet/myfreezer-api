@@ -1,18 +1,14 @@
 package com.kevinmilet.myfreezerapi.controller;
 
-import java.security.Principal;
 import java.time.Instant;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -45,8 +41,8 @@ public class UserController {
     private JwtUtils jwtUtils;
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    @PostMapping("/creer_utilisateur")
-    public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
+    @PostMapping("/add-user")
+    public ResponseEntity createUser(@Valid @RequestBody User user) {
 
 	User existingUser = userRepository.findOneByEmail(user.getEmail());
 
@@ -56,14 +52,13 @@ public class UserController {
 		    HttpStatus.BAD_REQUEST);
 	}
 
-	User savedUser = saveUser(user);
-
+	User newUser = saveUser(user);
 	Authentication authentication = jwtController.logUser(user.getEmail(), user.getPassword());
 	String jwt = jwtUtils.generateToken(authentication);
-	HttpHeaders headers = new HttpHeaders();
-	headers.add(JwtFilter.AUTHORIZATION_HEADER, "Bearer " + jwt);
+	HttpHeaders httpHeaders = new HttpHeaders();
+	httpHeaders.add(JwtFilter.AUTHORIZATION_HEADER, "Bearer " + jwt);
 
-	return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
+	return new ResponseEntity<>(newUser, httpHeaders, HttpStatus.OK);
     }
 
     private User saveUser(User user) {
@@ -81,25 +76,6 @@ public class UserController {
 	userRepository.save(newUser);
 
 	return newUser;
-    }
-
-    @GetMapping("/users")
-    public ResponseEntity<List<User>> getAllUsers() {
-
-	List<User> userList = (List<User>) userRepository.findAll();
-
-	return new ResponseEntity<>(userList, HttpStatus.OK);
-    }
-
-    public Long getUserConnectedId(Principal principal) {
-	if (!(principal instanceof UsernamePasswordAuthenticationToken)) {
-	    throw new RuntimeException("User not found");
-	}
-
-	UsernamePasswordAuthenticationToken user = (UsernamePasswordAuthenticationToken) principal;
-	User oneByMail = userRepository.findOneByEmail(user.getName());
-
-	return oneByMail.getId();
     }
 
 }
