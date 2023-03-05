@@ -9,8 +9,8 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import com.kevinmilet.myfreezerapi.entity.Freezer;
-import com.kevinmilet.myfreezerapi.service.FreezerService;
+import com.kevinmilet.myfreezerapi.entity.Product;
+import com.kevinmilet.myfreezerapi.service.ProductService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -20,39 +20,45 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Service
 @Slf4j
-public class FreezerServiceImpl implements FreezerService {
+public class ProductServiceImpl implements ProductService {
     @Override
-    public Iterable<Freezer> getAllFreezer() {
+    public List<Product> getAllProducts() {
 	// TODO Auto-generated method stub
 	return null;
     }
 
     @Override
-    public List<Freezer> getFreezerUser(Principal principal) {
+    public List<Product> getProductsByUser(Principal principal) {
 	// TODO Auto-generated method stub
 	return null;
     }
 
     @Override
-    public ResponseEntity<Freezer> createFreezer(Freezer freezer, Principal principal) {
+    public List<Product> getProductByFreezer(Long id) {
 	// TODO Auto-generated method stub
 	return null;
     }
 
     @Override
-    public Freezer updateFreezer(Long id, Freezer freezer) {
+    public ResponseEntity<Product> createProduct(Product product, Principal principal) {
 	// TODO Auto-generated method stub
 	return null;
     }
 
     @Override
-    public void deleteFreezer(Long id) {
+    public Product updateProduct(Long id, Product product) {
+	// TODO Auto-generated method stub
+	return null;
+    }
+
+    @Override
+    public void deleteProduct(Long id) {
 	// TODO Auto-generated method stub
 
     }
 
     @Override
-    public Freezer getFreezerById(Long id) {
+    public Product getProductById(Long id) {
 	// TODO Auto-generated method stub
 	return null;
     }

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kevinmilet.myfreezerapi.entity.ProductType;
 import com.kevinmilet.myfreezerapi.repository.ProductTypeRepository;
+import com.kevinmilet.myfreezerapi.service.ProductTypeService;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -30,25 +31,21 @@ import lombok.extern.slf4j.Slf4j;
 public class ProductTypeController {
 
     @Autowired
+    private ProductTypeService productTypeService;
+
+    @Autowired
     private ProductTypeRepository productTypeRepository;
 
     @GetMapping("/types_produits")
     public ResponseEntity<List<ProductType>> getAllProductsTypes() {
 
-	List<ProductType> productTypeList = (List<ProductType>) productTypeRepository.findAll();
-
-	return new ResponseEntity<>(productTypeList, HttpStatus.OK);
+	return new ResponseEntity<>(productTypeService.getAllProductTypes(), HttpStatus.OK);
     }
 
     @PostMapping("/types_produits/create")
     public ResponseEntity<ProductType> createProductType(@Valid @RequestBody ProductType productType) {
 
-	ProductType newProductType = new ProductType();
-	newProductType.setName(productType.getName());
-
-	productTypeRepository.save(newProductType);
-
-	return new ResponseEntity<>(newProductType, HttpStatus.CREATED);
+	return new ResponseEntity<>(productTypeService.createProductType(productType), HttpStatus.CREATED);
     }
 
     @DeleteMapping("/types_produits/delete/{id}")

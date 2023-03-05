@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kevinmilet.myfreezerapi.entity.User;
+import com.kevinmilet.myfreezerapi.repository.UserRepository;
+
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
@@ -27,6 +30,9 @@ public class JwtController {
     @Autowired
     AuthenticationManagerBuilder authenticationManagerBuilder;
 
+    @Autowired
+    UserRepository userRepository;
+
     @PostMapping("/authenticate")
     public ResponseEntity<?> createAuthToken(@RequestBody JwtRequest jwtRequest, HttpServletResponse response) {
 	Authentication authentication = logUser(jwtRequest.getEmail(), jwtRequest.getPassword());
@@ -37,7 +43,11 @@ public class JwtController {
 
 	Object principal = authentication.getPrincipal();
 
-	return new ResponseEntity<>(new JwtResponse(principal.toString()), httpHeaders, HttpStatus.OK);
+	User user = userRepository.findOneByEmail(jwtRequest.getEmail());
+
+	Boolean isAdmin = user.getIsAdmin();
+
+	return new ResponseEntity<>(new JwtResponse(principal.toString(), isAdmin), httpHeaders, HttpStatus.OK);
     }
 
     public Authentication logUser(String email, String password) {

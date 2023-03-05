@@ -74,6 +74,7 @@ public class FreezerController {
 	return freezerRepository.findById((Long.parseLong(id)));
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @PostMapping("/congelateur/create")
     public ResponseEntity<Freezer> createFreezer(@Valid @RequestBody Freezer freezer, Principal principal) {
 

@@ -22,9 +22,9 @@ public interface FreezerService {
 
     ResponseEntity<Freezer> createFreezer(Freezer freezer, Principal principal);
 
-    Freezer updateFreezer(Long id, Freezer freezer) throws Exception;
+    Freezer updateFreezer(Long id, Freezer freezer);
 
-    void deleteFreezer(Long id) throws Exception;
+    void deleteFreezer(Long id);
 
     Freezer getFreezerById(Long id);
 }

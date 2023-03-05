@@ -1,79 +1,27 @@
-package com.kevinmilet.myfreezerapi.entity;
+/**
+ * 
+ */
+package com.kevinmilet.myfreezerapi.dto;
 
 import java.time.Instant;
-
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.validation.constraints.NotBlank;
 
 /**
  * @author kevin
  *
  */
-@Entity
-public class User {
+public class UserCreationDto {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @NotBlank
     private String firstname;
-    @NotBlank
     private String lastname;
-    @NotBlank
     private String email;
-
     private String password;
-
-    @CreatedDate
-    @Column(nullable = false, updatable = false)
     private Instant created_at;
-
-    @LastModifiedDate
     private Instant updated_at;
-
     private String accountId;
-
-    @Column(columnDefinition = "boolean default false")
     private Boolean isAdmin;
-    @Column(columnDefinition = "boolean default false")
     private Boolean isActive;
-
-    @JsonIgnore
     private String token;
-
-    @JsonIgnore
     private Boolean password_request;
-
-    public User() {
-
-    }
-
-    public User(String lastname, String firstname, String email, String accountId, Boolean isAdmin, Boolean isActive) {
-	this.lastname = lastname;
-	this.firstname = firstname;
-	this.email = email;
-	this.accountId = accountId;
-	this.isAdmin = isActive;
-	this.isActive = isActive;
-    }
-
-    public Long getId() {
-	return id;
-    }
-
-    public void setId(long id) {
-	this.id = id;
-    }
 
     public String getFirstname() {
 	return firstname;
@@ -135,7 +83,7 @@ public class User {
 	return isAdmin;
     }
 
-    public void setIsAdmin(boolean isAdmin) {
+    public void setIsAdmin(Boolean isAdmin) {
 	this.isAdmin = isAdmin;
     }
 
@@ -143,7 +91,7 @@ public class User {
 	return isActive;
     }
 
-    public void setIsActive(boolean isActive) {
+    public void setIsActive(Boolean isActive) {
 	this.isActive = isActive;
     }
 

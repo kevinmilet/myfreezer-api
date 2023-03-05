@@ -3,14 +3,12 @@
  */
 package com.kevinmilet.myfreezerapi.service.impl;
 
-import java.security.Principal;
 import java.util.List;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import com.kevinmilet.myfreezerapi.entity.Freezer;
-import com.kevinmilet.myfreezerapi.service.FreezerService;
+import com.kevinmilet.myfreezerapi.entity.User;
+import com.kevinmilet.myfreezerapi.service.AdminService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -20,39 +18,45 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Service
 @Slf4j
-public class FreezerServiceImpl implements FreezerService {
+public class AdminServiceImpl implements AdminService {
     @Override
-    public Iterable<Freezer> getAllFreezer() {
+    public List<User> getAllUsers() {
 	// TODO Auto-generated method stub
 	return null;
     }
 
     @Override
-    public List<Freezer> getFreezerUser(Principal principal) {
+    public User updateUser(Long id, User userDto) {
 	// TODO Auto-generated method stub
 	return null;
     }
 
     @Override
-    public ResponseEntity<Freezer> createFreezer(Freezer freezer, Principal principal) {
+    public void deleteUser(Long id) {
+	// TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public User getUserById(Long id) {
 	// TODO Auto-generated method stub
 	return null;
     }
 
     @Override
-    public Freezer updateFreezer(Long id, Freezer freezer) {
+    public User findUserByEmail(String email) {
 	// TODO Auto-generated method stub
 	return null;
     }
 
     @Override
-    public void deleteFreezer(Long id) {
+    public User activateUser(Long id, User user) {
 	// TODO Auto-generated method stub
-
+	return null;
     }
 
     @Override
-    public Freezer getFreezerById(Long id) {
+    public User setUserAsAdmin(Long id, User user) {
 	// TODO Auto-generated method stub
 	return null;
     }

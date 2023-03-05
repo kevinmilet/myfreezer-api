@@ -68,7 +68,7 @@ public class UserController {
 	newUser.setFirstname(StringUtils.capitalize(user.getFirstname().trim()));
 	newUser.setLastname(StringUtils.capitalize(user.getLastname().trim()));
 	newUser.setPassword(new BCryptPasswordEncoder().encode(user.getPassword()));
-	newUser.setIsActive(Boolean.FALSE);
+	newUser.setIsActive(Boolean.TRUE);
 	newUser.setIsAdmin(Boolean.FALSE);
 	newUser.setCreated_at(Instant.now());
 	newUser.setAccountId(Utils.generateUUID());
